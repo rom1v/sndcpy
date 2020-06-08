@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+ADB=${ADB:-adb}
+VLC=${VLC:-vlc}
+SNDCPY_APK=${SNDCPY_APK:-sndcpy.apk}
+SNDCPY_PORT=${SNDCPY_PORT:-28200}
+
+serial=
+if [[ $# -ge 1 ]]
+then
+    serial="-s $1"
+    echo "Waiting for device $1..."
+else
+    echo 'Waiting for device...'
+fi
+
+"$ADB" $serial wait-for-device
+"$ADB" $serial install -t -r -g "$SNDCPY_APK" ||
+{
+    echo 'Uninstalling existing version first...'
+    "$ADB" $serial uninstall com.rom1v.sndcpy
+    "$ADB" $serial install -t -g "$SNDCPY_APK"
+}
+
+"$ADB" $serial forward tcp:$SNDCPY_PORT localabstract:sndcpy
+"$ADB" $serial shell am start com.rom1v.sndcpy/.MainActivity
+echo "Press Enter once audio capture is authorized on the device to start playing..."
+read dummy
+"$VLC" -Idummy --demux rawaud --network-caching=50 --play-and-exit tcp://localhost:"$SNDCPY_PORT"
