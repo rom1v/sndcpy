@@ -23,9 +23,9 @@ The purpose is to enable [audio forwarding][issue14] while mirroring with
 Download the latest release:
 
  - [`sndcpy-v1.0.zip`][release]  
-   _SHA256: TODO_
+   _SHA256: 4495f752fc192535cd5208ace4d35d2ba644beb9aabb0e288ae339861ad6782b_
  - [`sndcpy-with-adb-windows-v1.0.zip`][release-adb]  
-   _SHA256: TODO_
+   _SHA256: 4495f752fc192535cd5208ace4d35d2ba644beb9aabb0e288ae339861ad6782b_
 
 _On Windows, for simplicity, take the second archive, which also contains
 `adb`._
