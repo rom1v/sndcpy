@@ -112,6 +112,17 @@ main input error: ES_OUT_SET_(GROUP_)PCR  is called too late (pts_delay increase
 
 In that case, just restart it.
 
+## Environment variables
+
+The scripts [`sndcpy`](sndcpy) and [`sndcpy.bat`](sndcpy.bat) use some default
+values which can be overridden by environment variables.
+
+ - `ADB`: the full path to the `adb` executable
+ - `VLC`: the full path to the `vlc` executable
+ - `SNDCPY_APK`: the full path to `sndcpy.apk`
+ - `SNDCPY_PORT`: the local port to forward to communicate with the device
+
+
 ## Blog post
 
  - [Audio forwarding on Android 10][blogpost]
