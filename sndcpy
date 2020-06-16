@@ -26,4 +26,4 @@ fi
 "$ADB" $serial shell am start com.rom1v.sndcpy/.MainActivity
 echo "Press Enter once audio capture is authorized on the device to start playing..."
 read dummy
-"$VLC" -Idummy --demux rawaud --network-caching=50 --play-and-exit tcp://localhost:"$SNDCPY_PORT"
+"$VLC" -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:"$SNDCPY_PORT"

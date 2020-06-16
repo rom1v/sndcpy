@@ -22,7 +22,7 @@ if not "%1"=="" (
 echo Press Enter once audio capture is authorized on the device to start playing...
 pause >nul
 echo Playing audio...
-%VLC% -Idummy --demux rawaud --network-caching=50 --play-and-exit tcp://localhost:%SNDCPY_PORT%
+%VLC% -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:%SNDCPY_PORT%
 goto :EOF
 
 :error
