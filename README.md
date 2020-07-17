@@ -25,7 +25,7 @@ Download the latest release:
  - [`sndcpy-v1.0.zip`][release]  
    _SHA256: 4495f752fc192535cd5208ace4d35d2ba644beb9aabb0e288ae339861ad6782b_
  - [`sndcpy-with-adb-windows-v1.0.zip`][release-adb]  
-   _SHA256: 4495f752fc192535cd5208ace4d35d2ba644beb9aabb0e288ae339861ad6782b_
+   _SHA256: 42b89b7b557b9fdf0c6f3802eac171a0e5610a50a1d615a290ed7f41cba7053d_
 
 _On Windows, for simplicity, take the second archive, which also contains
 `adb`._
