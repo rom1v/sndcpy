@@ -1,7 +1,7 @@
 @echo off
 if not defined ADB set ADB=adb
 if not defined VLC set VLC="C:\Program Files\VideoLAN\VLC\vlc.exe"
-if not defined SNDCPY_APK set SNDCPY_APK=%~dp0\sndcpy.apk
+if not defined SNDCPY_APK set SNDCPY_APK="%~dp0\sndcpy.apk"
 if not defined SNDCPY_PORT set SNDCPY_PORT=28200
 
 if not "%1"=="" (
