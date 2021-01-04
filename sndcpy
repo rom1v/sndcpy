@@ -24,6 +24,17 @@ fi
 
 "$ADB" $serial forward tcp:$SNDCPY_PORT localabstract:sndcpy
 "$ADB" $serial shell am start com.rom1v.sndcpy/.MainActivity
-echo "Press Enter once audio capture is authorized on the device to start playing..."
-read dummy
+string='com.rom1v.sndcpy/com.rom1v.sndcpy.MainActivity/android.view.ViewRootImpl'
+while true; do
+    if "$ADB" shell dumpsys gfxinfo com.rom1v.sndcpy | grep -q $string; then
+        break
+    fi
+done
+while true; do
+    if "$ADB" shell dumpsys gfxinfo com.rom1v.sndcpy | grep -q $string; then
+    	echo "waiting"
+    else
+    	break
+    fi
+done
 "$VLC" -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:"$SNDCPY_PORT"
