@@ -31,11 +31,20 @@ if not "%1"=="" (
 	%ADB% %serial% shell am start com.rom1v.sndcpy/.MainActivity || goto :error
 :end
 
-echo Press Enter once audio capture is authorized on the device to start playing...
-pause >nul
-echo Playing audio...
-%VLC% -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:%SNDCPY_PORT%
-goto :EOF
+:: This method doesn't count that the screen could be skipped
+:checkAllowed
+	::Recommended delay time for the popup to appear
+	timeout 5
+	
+	%ADB% shell dumpsys gfxinfo com.rom1v.sndcpy > temp.txt
+	FindStr /C:"com.rom1v.sndcpy/com.rom1v.sndcpy.MainActivity/android.view.ViewRootImpl" temp.txt >Nul && (goto :checkAllowed) || goto :playAudio
+:end
+
+:playAudio
+	echo Playing audio...
+	%VLC% -Idummy --demux rawaud --network-caching=50 --play-and-exit tcp://localhost:%SNDCPY_PORT%
+	goto :EOF
+:end
 
 :error
 echo Failed with error #%errorlevel%.
