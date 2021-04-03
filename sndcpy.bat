@@ -12,13 +12,25 @@ if not "%1"=="" (
 )
 
 %ADB% %serial% wait-for-device || goto :error
-%ADB% %serial% install -t -r -g %SNDCPY_APK% || (
-    echo Uninstalling existing version first...
-    %ADB% %serial% uninstall com.rom1v.sndcpy || goto :error
-    %ADB% %serial% install -t -g %SNDCPY_APK% || goto :error
-)
-%ADB% %serial% forward tcp:%SNDCPY_PORT% localabstract:sndcpy || goto :error
-%ADB% %serial% shell am start com.rom1v.sndcpy/.MainActivity || goto :error
+
+:checkIfAppIsInstalled
+	%ADB% shell pm list packages | findstr /C:"com.rom1v.sndcpy" > temp.txt
+	FindStr /C:"com.rom1v.sndcpy" temp.txt >Nul && (goto :startForwarding) || goto :installApp
+:end
+
+:installApp
+	%ADB% %serial% install -t -r -g %SNDCPY_APK% || (
+		echo Uninstalling existing version first...
+		%ADB% %serial% uninstall com.rom1v.sndcpy || goto :error
+		%ADB% %serial% install -t -g %SNDCPY_APK% || goto :error
+	)
+:end
+
+:startForwarding
+	%ADB% %serial% forward tcp:%SNDCPY_PORT% localabstract:sndcpy || goto :error
+	%ADB% %serial% shell am start com.rom1v.sndcpy/.MainActivity || goto :error
+:end
+
 echo Press Enter once audio capture is authorized on the device to start playing...
 pause >nul
 echo Playing audio...
