@@ -11,6 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name="com.rom1v.sndcpy.MainActivity"
+            android:exported="true"
             android:theme="@style/Theme.Transparent"
             android:showWhenLocked="true"
             android:turnScreenOn="true">
