@@ -22,8 +22,11 @@ fi
     "$ADB" $serial install -t -g "$SNDCPY_APK"
 }
 
+"$ADB" $serial shell appops set com.rom1v.sndcpy PROJECT_MEDIA allow
 "$ADB" $serial forward tcp:$SNDCPY_PORT localabstract:sndcpy
 "$ADB" $serial shell am start com.rom1v.sndcpy/.MainActivity
-echo "Press Enter once audio capture is authorized on the device to start playing..."
-read dummy
+
+sleep 1
+
+echo Playing audio...
 "$VLC" -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:"$SNDCPY_PORT"
