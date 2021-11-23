@@ -115,7 +115,7 @@ public class RecordService extends Service {
 
     private Notification.Action createStopAction() {
         Intent stopIntent = createStopIntent();
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE);
         Icon stopIcon = Icon.createWithResource(this, R.drawable.ic_close_24dp);
         String stopString = getString(R.string.action_stop);
         Notification.Action.Builder actionBuilder = new Notification.Action.Builder(stopIcon, stopString, stopPendingIntent);
