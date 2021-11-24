@@ -26,7 +26,7 @@ fi
 "$ADB" $serial forward tcp:$SNDCPY_PORT localabstract:sndcpy
 "$ADB" $serial shell am start com.rom1v.sndcpy/.MainActivity
 
-sleep 1
+sleep 2
 
 echo Playing audio...
 "$VLC" -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:"$SNDCPY_PORT"

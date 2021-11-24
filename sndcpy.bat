@@ -21,7 +21,7 @@ if not "%1"=="" (
 %ADB% %serial% forward tcp:%SNDCPY_PORT% localabstract:sndcpy || goto :error
 %ADB% %serial% shell am start com.rom1v.sndcpy/.MainActivity || goto :error
 
-timeout 1
+timeout 2
 
 echo Playing audio...
 %VLC% -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:%SNDCPY_PORT%
