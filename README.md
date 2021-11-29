@@ -53,14 +53,10 @@ If several devices are connected (listed by `adb devices`):
 
 _(omit `./` on Windows)_
 
-It will install the app on the device, and request permission to start audio
-capture:
+It will install the app on the device and start forwarding audio.
 
-![screenshot](assets/request.png)
-
-Once you clicked on _START NOW_, press _Enter_ in the console to start playing
-on the computer. Press `Ctrl`+`c` in the terminal to stop (except on Windows,
-just disconnect the device or stop capture from the device notifications).
+Press `Ctrl`+`c` in the terminal to stop (except on Windows, just disconnect the
+device or stop capture from the device notifications).
 
 VLC may print this error message once:
 
