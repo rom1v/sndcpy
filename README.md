@@ -9,6 +9,16 @@ The purpose is to enable [audio forwarding][issue14] while mirroring with
 [issue14]: https://github.com/Genymobile/scrcpy/issues/14
 [scrcpy]: https://github.com/Genymobile/scrcpy
 
+## Note
+
+This application is a proof-of-concept. But as explained below, many apps are
+restricted and could not forward the audio.
+
+Currently, the best solution to forward audio is to connect the device via
+bluetooth to the computer. It works for all apps, it does not suffer from
+additional limitations and works for basically all devices, contrary to
+_sndcpy_.
+
 
 ## Requirements
 
