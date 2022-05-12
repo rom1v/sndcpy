@@ -33,9 +33,9 @@ _sndcpy_.
 Download the latest release:
 
  - [`sndcpy-v1.1.zip`][release]  
-   _SHA256: _b045320ddddbc5a237d6d95213c664f03b2f46ef8bbfcef91c2d95644ed42bbc
+   <sub>SHA-256: `b045320ddddbc5a237d6d95213c664f03b2f46ef8bbfcef91c2d95644ed42bbc`</sub>
  - [`sndcpy-with-adb-windows-v1.1.zip`][release-adb]  
-   _SHA256: _0b93c846f574df3f38f53eeee44b1a35b863a49465da8f5cd5b1b69a29305901
+   <sub>SHA-256: `0b93c846f574df3f38f53eeee44b1a35b863a49465da8f5cd5b1b69a29305901`</sub>
 
 _On Windows, for simplicity, take the second archive, which also contains
 `adb`._
