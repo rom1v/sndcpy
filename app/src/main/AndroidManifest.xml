@@ -9,16 +9,19 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round">
+
         <activity
             android:name="com.rom1v.sndcpy.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Transparent"
             android:showWhenLocked="true"
-            android:excludeFromRecents="true"
-            android:turnScreenOn="true">
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true">
+            <!--Hide background multitasking cards-->
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.DEFAULT" /> <!--Hide desktop icons-->
             </intent-filter>
         </activity>
 
