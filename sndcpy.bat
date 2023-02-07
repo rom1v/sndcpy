@@ -1,4 +1,6 @@
 @echo off
+cd /d "%~dp0"
+
 if not defined ADB set ADB=adb
 if not defined VLC set VLC="C:\Program Files\VideoLAN\VLC\vlc.exe"
 if not defined SNDCPY_APK set SNDCPY_APK=sndcpy.apk
