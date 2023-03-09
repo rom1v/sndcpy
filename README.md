@@ -89,8 +89,8 @@ adb uninstall com.rom1v.sndcpy
 
 ## Apps restrictions
 
-`sndcpy` may only forward audio from apps which do not [prevent audio
-capture][allow]. The rules are detailed in [§capture policy][rules]:
+`sndcpy` may only forward audio from apps which do not prevent audio
+capture. The rules are detailed in [§capture policy][rules]:
 
 > - By default, apps that target versions up to and including to Android 9.0 do
 >   not permit playback capture. To enable it, include
@@ -102,7 +102,6 @@ capture][allow]. The rules are detailed in [§capture policy][rules]:
 
 So some apps might need to be updated to support audio capture.
 
-[allow]: https://developer.android.com/guide/topics/media/playback-capture#allowing_playback_capture
 [rules]: https://developer.android.com/guide/topics/media/playback-capture#capture_policy
 
 ## Audio delay
