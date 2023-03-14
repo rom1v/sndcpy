@@ -6,19 +6,16 @@ require any _root_ access. It works on _GNU/Linux_, _Windows_ and _macOS_.
 The purpose is to enable [audio forwarding][issue14] while mirroring with
 [scrcpy]. However, it can be used independently.
 
+**Update: [scrcpy 2.0] now supports audio forwarding natively.**
+
 [issue14]: https://github.com/Genymobile/scrcpy/issues/14
 [scrcpy]: https://github.com/Genymobile/scrcpy
+[scrcpy 2.0]: https://blog.rom1v.com/2023/03/scrcpy-2-0-with-audio/
 
 ## Note
 
 This application is a proof-of-concept. But as explained below, many apps are
 restricted and could not forward the audio.
-
-Currently, the best solution to forward audio is to connect the device via
-bluetooth to the computer. It works for all apps, it does not suffer from
-additional limitations and works for basically all devices, contrary to
-_sndcpy_.
-
 
 ## Requirements
 
