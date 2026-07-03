@@ -22,6 +22,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="com.rom1v.sndcpy.ServerListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SndcpyApp" />
+
         <service
             android:name="com.rom1v.sndcpy.RecordService"
             android:enabled="true"

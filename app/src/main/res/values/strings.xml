@@ -4,7 +4,9 @@
     <string name="notification_forwarding">Audio forwarding enabled</string>
     <string name="action_stop">Stop</string>
 
-    <!-- New IP entry UI strings -->
+    <!-- Main screen -->
+    <string name="label_nickname">Nickname (optional)</string>
+    <string name="hint_nickname">e.g. Home PC</string>
     <string name="label_server_ip">Server IP Address</string>
     <string name="hint_server_ip">e.g. 192.168.1.100</string>
     <string name="label_server_port">Port</string>
@@ -16,4 +18,12 @@
     <string name="status_streaming">● Streaming audio</string>
     <string name="error_invalid_ip">Please enter a valid IP address or hostname</string>
     <string name="error_invalid_port">Port must be between 1 and 65535</string>
+    <string name="btn_servers">Server History</string>
+
+    <!-- Server history screen -->
+    <string name="label_server_history">Server History</string>
+    <string name="btn_select">Select</string>
+    <string name="search_hint">Search by nickname or IP…</string>
+    <string name="empty_server_list">No saved servers yet.\nConnect to a server to add it here.</string>
+    <string name="back">Back</string>
 </resources>
