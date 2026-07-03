@@ -76,6 +76,27 @@ It is "expected", just ignore it.
 The sound continues to be played on the device. The volume can be adjusted
 independently on the device and on the computer.
 
+
+## Wireless / ADB-Free Mode (WiFi)
+
+You can also run `sndcpy` completely wirelessly over WiFi/LAN without needing ADB, USB debugging, or a cable. In this mode, the PC runs a Python receiver server, and you enter the PC's IP and port directly into the `sndcpy` Android app.
+
+### 1. Run the receiver on the PC
+Start the Python server on your computer:
+```bash
+./sndcpy-server
+```
+*(By default, this plays audio via VLC on port 28200. You can also specify `--pipewire` or `--pulseaudio` backends).*
+
+### 2. Stream from the Android app
+1. Build and install the `sndcpy` APK on your phone.
+2. Open the `sndcpy` app on your device.
+3. Enter your PC's IP address and the port (default: `28200`).
+4. Tap **Start Streaming**.
+
+To stop streaming, either tap the **Stop Streaming** button in the app, click the notification action on your phone, or press `Ctrl+C` on the PC server terminal. The phone volume will automatically mute during streaming and restore to its original state when stopped.
+
+
 ## Uninstall
 
 To uninstall the app from the device:

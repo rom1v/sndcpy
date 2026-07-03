@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""
+sndcpy-server — PC-side audio receiver for sndcpy (ADB-free WiFi mode)
+
+The Android sndcpy app connects directly to this server over WiFi/LAN
+and streams raw PCM audio (48000 Hz, stereo, 16-bit LE).
+This server pipes the audio into VLC or PipeWire for playback.
+
+Usage:
+    ./sndcpy-server                    # play via VLC (default)
+    ./sndcpy-server --pipewire         # play via pw-cat (PipeWire, lower latency)
+    ./sndcpy-server --pulseaudio       # play via pacat (PulseAudio)
+    ./sndcpy-server --port 28200       # custom port (default: 28200)
+    ./sndcpy-server --latency 500      # buffer latency in ms (default: 500)
+    ./sndcpy-server --bind 0.0.0.0    # bind address (default: all interfaces)
+"""
+
+import argparse
+import socket
+import subprocess
+import sys
+import time
+
+SAMPLE_RATE = 48000
+CHANNELS = 2
+CHUNK_SIZE = 4096  # bytes per recv() call
+
+
+def make_player_cmd(backend: str, latency_ms: int) -> list:
+    if backend == "vlc":
+        return [
+            "vlc",
+            "-Idummy",
+            "--demux", "rawaud",
+            "--rawaud-samplerate", str(SAMPLE_RATE),
+            "--rawaud-channels", str(CHANNELS),
+            "--rawaud-fourcc", "s16l",       # signed 16-bit little-endian PCM
+            "--audio-channels", str(CHANNELS), # force stereo output (prevents karaoke/phase effect)
+            "--network-caching", str(latency_ms),
+            "--play-and-exit",
+            "-",
+        ]
+    elif backend == "pipewire":
+        return [
+            "pw-cat",
+            "--playback",
+            "--raw",
+            "--format=s16",
+            f"--rate={SAMPLE_RATE}",
+            f"--channels={CHANNELS}",
+            "--channel-map=FL,FR",           # force explicit L/R mapping (prevents karaoke/phase effect)
+            f"--latency={latency_ms}ms",
+            "-",
+        ]
+    elif backend == "pulseaudio":
+        return [
+            "pacat",
+            "--playback",
+            "--format=s16le",
+            f"--rate={SAMPLE_RATE}",
+            f"--channels={CHANNELS}",
+            f"--latency-msec={latency_ms}",
+        ]
+    else:
+        print(f"Unknown backend: {backend}", file=sys.stderr)
+        sys.exit(1)
+
+
+def stream_to_player(conn: socket.socket, player_cmd: list):
+    """Accept audio from conn, pipe into player process until connection closes."""
+    print(f"  Starting player: {' '.join(player_cmd)}")
+    proc = subprocess.Popen(player_cmd, stdin=subprocess.PIPE)
+    try:
+        while True:
+            data = conn.recv(CHUNK_SIZE)
+            if not data:
+                break
+            try:
+                proc.stdin.write(data)
+                proc.stdin.flush()
+            except BrokenPipeError:
+                print("  Player stdin closed (player exited?)")
+                break
+    except OSError as e:
+        print(f"  Socket error: {e}")
+    finally:
+        try:
+            proc.stdin.close()
+        except Exception:
+            pass
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        print("  Player stopped.")
+
+
+def run_server(bind_addr: str, port: int, backend: str, latency_ms: int):
+    player_cmd = make_player_cmd(backend, latency_ms)
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((bind_addr, port))
+    server.listen(1)
+
+    print("=" * 50)
+    print(f"  sndcpy-server — ADB-free WiFi audio receiver")
+    print("=" * 50)
+    print(f"  Backend  : {backend}")
+    print(f"  Latency  : {latency_ms} ms")
+    print(f"  Listening: {bind_addr}:{port}")
+    print()
+    print("  Open the sndcpy app on your phone,")
+    print(f"  enter this PC's IP and port {port},")
+    print("  then tap 'Start Streaming'.")
+    print()
+    print("  Press Ctrl+C to stop.")
+    print("=" * 50)
+
+    try:
+        while True:
+            print("\nWaiting for phone to connect...")
+            try:
+                conn, addr = server.accept()
+            except OSError:
+                break  # server socket closed
+
+            print(f"Phone connected from {addr[0]}:{addr[1]}")
+            stream_to_player(conn, player_cmd)
+            conn.close()
+            print("Phone disconnected. Waiting for next connection...")
+            time.sleep(0.5)
+
+    except KeyboardInterrupt:
+        print("\n\nStopping sndcpy-server.")
+    finally:
+        server.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="sndcpy-server: receive phone audio over WiFi and play on PC"
+    )
+    parser.add_argument(
+        "--backend",
+        choices=["vlc", "pipewire", "pulseaudio"],
+        default="vlc",
+        help="Audio playback backend (default: vlc)",
+    )
+    parser.add_argument(
+        "--pipewire",
+        action="store_const",
+        dest="backend",
+        const="pipewire",
+        help="Use PipeWire (pw-cat) for playback",
+    )
+    parser.add_argument(
+        "--pulseaudio",
+        action="store_const",
+        dest="backend",
+        const="pulseaudio",
+        help="Use PulseAudio (pacat) for playback",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=28200,
+        help="TCP port to listen on (default: 28200)",
+    )
+    parser.add_argument(
+        "--latency",
+        type=int,
+        default=500,
+        metavar="MS",
+        help="Playback buffer latency in milliseconds (default: 500)",
+    )
+    parser.add_argument(
+        "--bind",
+        default="0.0.0.0",
+        metavar="ADDRESS",
+        help="Address to bind to (default: 0.0.0.0 = all interfaces)",
+    )
+
+    args = parser.parse_args()
+    run_server(args.bind, args.port, args.backend, args.latency)
+
+
+if __name__ == "__main__":
+    main()

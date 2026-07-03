@@ -3,6 +3,7 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="false"
@@ -12,7 +13,7 @@
         <activity
             android:name="com.rom1v.sndcpy.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Transparent"
+            android:theme="@style/Theme.SndcpyApp"
             android:showWhenLocked="true"
             android:turnScreenOn="true">
             <intent-filter>
@@ -20,6 +21,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.rom1v.sndcpy.ServerListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SndcpyApp" />
 
         <service
             android:name="com.rom1v.sndcpy.RecordService"

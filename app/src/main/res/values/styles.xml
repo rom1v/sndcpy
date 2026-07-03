@@ -9,4 +9,9 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <style name="Theme.SndcpyApp" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">#1565C0</item>
+    </style>
+
 </resources>
