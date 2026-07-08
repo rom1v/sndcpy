@@ -1,32 +1,130 @@
 #!/bin/bash
-set -e
+# Play Android audio forwarded over adb. Restarts capture when the stream or
+# the device-side app stops (common on Android 11+ battery optimization).
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ADB=${ADB:-adb}
 VLC=${VLC:-vlc}
-SNDCPY_APK=${SNDCPY_APK:-sndcpy.apk}
+FFPLAY=${FFPLAY:-ffplay}
+MPV=${MPV:-mpv}
+PLAYER=${PLAYER:-vlc}
+SNDCPY_APK=${SNDCPY_APK:-$SCRIPT_DIR/sndcpy.apk}
 SNDCPY_PORT=${SNDCPY_PORT:-28200}
+PKG=com.rom1v.sndcpy
+WATCHDOG_INTERVAL=${WATCHDOG_INTERVAL:-15}
+RECONNECT_DELAY=${RECONNECT_DELAY:-2}
+
+RUNNING=1
+PLAYER_PID=
+WATCHDOG_PID=
 
 serial=
-if [[ $# -ge 1 ]]
-then
+if [[ $# -ge 1 ]]; then
     serial="-s $1"
     echo "Waiting for device $1..."
 else
     echo 'Waiting for device...'
 fi
 
-"$ADB" $serial wait-for-device
-"$ADB" $serial install -t -r -g "$SNDCPY_APK" ||
-{
-    echo 'Uninstalling existing version first...'
-    "$ADB" $serial uninstall com.rom1v.sndcpy
-    "$ADB" $serial install -t -g "$SNDCPY_APK"
+cleanup() {
+    RUNNING=
+    [[ -n $WATCHDOG_PID ]] && kill "$WATCHDOG_PID" 2>/dev/null
+    [[ -n $PLAYER_PID ]] && kill "$PLAYER_PID" 2>/dev/null
+    "$ADB" $serial forward --remove "tcp:$SNDCPY_PORT" 2>/dev/null || true
+    wait 2>/dev/null
+    exit 0
+}
+trap cleanup EXIT INT TERM
+
+allow_background_capture() {
+    "$ADB" $serial shell appops set "$PKG" PROJECT_MEDIA allow
+    "$ADB" $serial shell dumpsys deviceidle whitelist +"$PKG" 2>/dev/null || true
+    "$ADB" $serial shell cmd appops set "$PKG" RUN_IN_BACKGROUND allow 2>/dev/null || true
+    "$ADB" $serial shell cmd appops set "$PKG" RUN_ANY_IN_BACKGROUND allow 2>/dev/null || true
+    "$ADB" $serial shell cmd appops set "$PKG" UNUSED_APP_RESTRICTIONS ignore 2>/dev/null || true
 }
 
-"$ADB" $serial shell appops set com.rom1v.sndcpy PROJECT_MEDIA allow
-"$ADB" $serial forward tcp:$SNDCPY_PORT localabstract:sndcpy
-"$ADB" $serial shell am start com.rom1v.sndcpy/.MainActivity
+install_apk() {
+    "$ADB" $serial install -t -r -g "$SNDCPY_APK" || {
+        echo 'Uninstalling existing version first...'
+        "$ADB" $serial uninstall "$PKG"
+        "$ADB" $serial install -t -g "$SNDCPY_APK"
+    }
+}
 
-sleep 2
+restart_capture() {
+    "$ADB" $serial forward --remove "tcp:$SNDCPY_PORT" 2>/dev/null || true
+    "$ADB" $serial forward "tcp:$SNDCPY_PORT" "localabstract:sndcpy"
+    "$ADB" $serial shell am start -n "$PKG/.MainActivity" >/dev/null
+}
 
-echo Playing audio...
-"$VLC" -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:"$SNDCPY_PORT"
+play_audio_vlc() {
+    "$VLC" -Idummy --demux rawaud --network-caching=-1 --play-and-exit \
+        "tcp://127.0.0.1:$SNDCPY_PORT"
+}
+
+play_audio_ffplay() {
+    "$FFPLAY" -hide_banner -loglevel warning \
+        -f s16le -ar 48000 -ac 2 \
+        -nodisp -autoexit \
+        "tcp://127.0.0.1:$SNDCPY_PORT"
+}
+
+play_audio_mpv() {
+    "$MPV" --no-video --no-terminal --really-quiet \
+        --demuxer=rawaudio \
+        --demuxer-rawaudio-rate=48000 \
+        --demuxer-rawaudio-channels=stereo \
+        --demuxer-rawaudio-format=s16le \
+        --audio-samplerate=48000 \
+        "tcp://127.0.0.1:$SNDCPY_PORT"
+}
+
+play_audio() {
+    case "$PLAYER" in
+        vlc) play_audio_vlc ;;
+        ffplay) play_audio_ffplay ;;
+        mpv) play_audio_mpv ;;
+        *)
+            echo "Unknown PLAYER=$PLAYER (use vlc, ffplay, or mpv)" >&2
+            return 1
+            ;;
+    esac
+}
+
+watchdog() {
+    while [[ -n $RUNNING ]]; do
+        sleep "$WATCHDOG_INTERVAL"
+        [[ -z $RUNNING ]] && break
+
+        if ! "$ADB" $serial shell pidof "$PKG" >/dev/null 2>&1; then
+            echo "sndcpy stopped on device, restarting capture..."
+            restart_capture
+            [[ -n $PLAYER_PID ]] && kill "$PLAYER_PID" 2>/dev/null
+        fi
+    done
+}
+
+set -e
+"$ADB" $serial wait-for-device
+install_apk
+allow_background_capture
+set +e
+
+watchdog &
+WATCHDOG_PID=$!
+
+echo "Playing audio (player=$PLAYER; Ctrl+C to stop)..."
+while [[ -n $RUNNING ]]; do
+    restart_capture
+    sleep 2
+
+    play_audio &
+    PLAYER_PID=$!
+    wait "$PLAYER_PID"
+    PLAYER_PID=
+
+    [[ -z $RUNNING ]] && break
+    echo "Stream ended, reconnecting in ${RECONNECT_DELAY}s..."
+    sleep "$RECONNECT_DELAY"
+done
