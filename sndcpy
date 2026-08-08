@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+pushd $(dirname $([ -L $0 ] && readlink -f $0 || echo $0))
 ADB=${ADB:-adb}
 VLC=${VLC:-vlc}
 SNDCPY_APK=${SNDCPY_APK:-sndcpy.apk}
@@ -30,3 +31,4 @@ sleep 2
 
 echo Playing audio...
 "$VLC" -Idummy --demux rawaud --network-caching=0 --play-and-exit tcp://localhost:"$SNDCPY_PORT"
+popd
