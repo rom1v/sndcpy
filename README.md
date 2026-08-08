@@ -114,6 +114,17 @@ main input error: ES_OUT_SET_(GROUP_)PCR  is called too late (pts_delay increase
 
 In that case, just restart it.
 
+On GNU/Linux, the script automatically reconnects when the stream stops. If
+audio stops after a few minutes, also disable battery optimization for the
+sndcpy app on the device (see issue #153).
+
+Alternative players may reduce delay or buffering issues:
+
+```bash
+PLAYER=ffplay ./sndcpy
+PLAYER=mpv ./sndcpy
+```
+
 ## Environment variables
 
 The scripts [`sndcpy`](sndcpy) and [`sndcpy.bat`](sndcpy.bat) use some default
@@ -121,8 +132,15 @@ values which can be overridden by environment variables.
 
  - `ADB`: the full path to the `adb` executable
  - `VLC`: the full path to the `vlc` executable
+ - `FFPLAY`: the full path to the `ffplay` executable
+ - `MPV`: the full path to the `mpv` executable
+ - `PLAYER`: the player to use (`vlc`, `ffplay` or `mpv`; default: `vlc`)
  - `SNDCPY_APK`: the full path to `sndcpy.apk`
  - `SNDCPY_PORT`: the local port to forward to communicate with the device
+ - `WATCHDOG_INTERVAL`: seconds between checks that the device app is still
+   running (default: `15`)
+ - `RECONNECT_DELAY`: seconds to wait before reconnecting after a stream ends
+   (default: `2`)
 
 
 ## Blog post
