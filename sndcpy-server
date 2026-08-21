@@ -66,13 +66,38 @@ def make_player_cmd(backend: str, latency_ms: int) -> list:
         sys.exit(1)
 
 
+# How long (seconds) recv() waits before declaring the phone gone after a WiFi drop.
+# Without a timeout, recv() blocks indefinitely on a dead connection and the
+# server never calls accept() for the phone's reconnection attempt.
+RECV_TIMEOUT = 5
+
+
+def _enable_keepalive(sock: socket.socket):
+    """Enable TCP keepalive so the OS detects a dead link even when we're only reading."""
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    if hasattr(socket, "TCP_KEEPIDLE"):   # Linux
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 5)   # start probing after 5 s idle
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 2)  # probe every 2 s
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)    # give up after 3 failed probes
+
+
 def stream_to_player(conn: socket.socket, player_cmd: list):
     """Accept audio from conn, pipe into player process until connection closes."""
+    # Detect dead connections quickly instead of blocking forever:
+    # - recv() timeout catches the case where data simply stops arriving
+    # - TCP keepalive detects a silently dead link at the OS level
+    conn.settimeout(RECV_TIMEOUT)
+    _enable_keepalive(conn)
+
     print(f"  Starting player: {' '.join(player_cmd)}")
     proc = subprocess.Popen(player_cmd, stdin=subprocess.PIPE)
     try:
         while True:
-            data = conn.recv(CHUNK_SIZE)
+            try:
+                data = conn.recv(CHUNK_SIZE)
+            except (socket.timeout, TimeoutError):
+                print("  No data received (phone disconnected / WiFi dropped?)")
+                break
             if not data:
                 break
             try:
