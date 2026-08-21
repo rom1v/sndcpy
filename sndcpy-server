@@ -71,6 +71,11 @@ def make_player_cmd(backend: str, latency_ms: int) -> list:
 # server never calls accept() for the phone's reconnection attempt.
 RECV_TIMEOUT = 5
 
+# Extra drain time (seconds) after player exits before accepting next connection.
+# Needed for PulseAudio: pacat holds the audio device briefly after termination;
+# a new pacat started too quickly will fail to open the device.
+PLAYER_DRAIN_TIME = 1.0
+
 
 def _enable_keepalive(sock: socket.socket):
     """Enable TCP keepalive so the OS detects a dead link even when we're only reading."""
@@ -81,22 +86,47 @@ def _enable_keepalive(sock: socket.socket):
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)    # give up after 3 failed probes
 
 
+def _set_recv_timeout(sock: socket.socket, seconds: float):
+    """Set recv timeout at the kernel (SO_RCVTIMEO) level in addition to Python's settimeout().
+
+    On old 32-bit kernels, Python's socket.settimeout() wraps select() which may
+    not interrupt a blocking recv() on a half-open TCP connection.  SO_RCVTIMEO
+    is enforced directly by the kernel and works regardless of Python version.
+    """
+    import struct
+    secs = int(seconds)
+    usecs = int((seconds - secs) * 1_000_000)
+    # struct timeval: two longs (varies by arch but struct.pack handles it)
+    timeval = struct.pack("ll", secs, usecs)
+    try:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeval)
+    except OSError:
+        pass  # fall back to Python-level settimeout only
+
+
 def stream_to_player(conn: socket.socket, player_cmd: list):
     """Accept audio from conn, pipe into player process until connection closes."""
     # Detect dead connections quickly instead of blocking forever:
-    # - recv() timeout catches the case where data simply stops arriving
+    # - Python-level timeout (settimeout) + kernel-level SO_RCVTIMEO for old kernels
     # - TCP keepalive detects a silently dead link at the OS level
     conn.settimeout(RECV_TIMEOUT)
+    _set_recv_timeout(conn, RECV_TIMEOUT)  # kernel-level fallback for old 32-bit systems
     _enable_keepalive(conn)
 
     print(f"  Starting player: {' '.join(player_cmd)}")
     proc = subprocess.Popen(player_cmd, stdin=subprocess.PIPE)
     try:
         while True:
+            # Also check if the player itself has already exited (e.g. pacat lost
+            # the audio device or was killed externally).  Without this check the
+            # loop would spin writing into a dead proc.stdin indefinitely.
+            if proc.poll() is not None:
+                print("  Player exited unexpectedly.")
+                break
             try:
                 data = conn.recv(CHUNK_SIZE)
-            except (socket.timeout, TimeoutError):
-                print("  No data received (phone disconnected / WiFi dropped?)")
+            except (socket.timeout, TimeoutError, OSError) as e:
+                print(f"  Connection lost (WiFi dropped?): {e}")
                 break
             if not data:
                 break
@@ -119,6 +149,10 @@ def stream_to_player(conn: socket.socket, player_cmd: list):
         except subprocess.TimeoutExpired:
             proc.kill()
         print("  Player stopped.")
+        # Give PulseAudio (pacat) time to fully release the audio device before
+        # the next connection attempts to open it.  Without this, the new pacat
+        # process races the old one and may fail to acquire the sink.
+        time.sleep(PLAYER_DRAIN_TIME)
 
 
 def run_server(bind_addr: str, port: int, backend: str, latency_ms: int):
